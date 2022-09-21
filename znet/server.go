@@ -33,6 +33,9 @@ func (s *Server) Start() {
 		utils.GlobalObject.MaxPackageSize)
 	// 1.获取一个TCP的Addr
 	go func() {
+		// 开启消息队列及worker工作池
+		s.MsgHandler.StartWorkerPool()
+
 		addr, err := net.ResolveTCPAddr(s.IPversion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {
 			fmt.Println("resolve tcp addr error:", err)

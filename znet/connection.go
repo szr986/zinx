@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 
+	"example.com/m/utils"
 	"example.com/m/ziface"
 )
 
@@ -109,9 +110,15 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		// 从路由中，找到注册绑定的conn对应的router调用
-		// 根据绑定好的msgid 找到对应的处理API
-		go c.MsgHandle.DoMsgHandler(&req)
+		// 判断是否开启工作池
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			// 将消息发给worker工作池
+			c.MsgHandle.SendMsgToTaskQueue(&req)
+		} else {
+			// 从路由中，找到注册绑定的conn对应的router调用
+			// 根据绑定好的msgid 找到对应的处理API
+			go c.MsgHandle.DoMsgHandler(&req)
+		}
 
 	}
 }
