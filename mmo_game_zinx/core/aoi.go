@@ -2,6 +2,16 @@ package core
 
 import "fmt"
 
+// 定义一些AOI边界值
+const (
+	AOI_MIN_X  int = 0
+	AOI_MAX_X  int = 410
+	AOI_CNTS_X int = 10
+	AOI_MIN_Y  int = 0
+	AOI_MAX_Y  int = 400
+	AOI_CNTS_Y int = 20
+)
+
 // AOI 区域管理模块
 
 type AOIManager struct {
@@ -123,7 +133,37 @@ func (m *AOIManager) GetPidsByPos(x, y float32) (playerIDs []int) {
 
 	for _, v := range grids {
 		playerIDs = append(playerIDs, v.GetPlayerIDs()...)
-		fmt.Println(" ====> grid id :%d,pid:%v", v.playerIDs, v.GetPlayerIDs)
+		fmt.Println(" ====>", v.playerIDs, v.GetPlayerIDs())
 	}
 	return
+}
+
+// 添加一个player到格子中
+func (m *AOIManager) AddPidToGrid(pID, gID int) {
+	m.grids[gID].Add(pID)
+}
+
+// 从格子中移除一个player
+func (m *AOIManager) RemovePidFromGrid(pID, gID int) {
+	m.grids[gID].Remove(pID)
+}
+
+// 通过GID获取全部的playerID
+func (m *AOIManager) GetPidsByGid(gID int) (playerIDs []int) {
+	playerIDs = m.grids[gID].GetPlayerIDs()
+	return
+}
+
+// 通过坐标将Player添加到格子中
+func (m *AOIManager) AddToGridByPos(pID int, x, y float32) {
+	gID := m.GetGidByPos(x, y)
+	grid := m.grids[gID]
+	grid.Add(pID)
+}
+
+// 通过坐标从格子中删除一个player
+func (m *AOIManager) RemoveFromGridByPos(pID int, x, y float32) {
+	gID := m.GetGidByPos(x, y)
+	grid := m.grids[gID]
+	grid.Remove(pID)
 }
