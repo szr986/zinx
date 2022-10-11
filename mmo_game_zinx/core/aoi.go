@@ -5,10 +5,10 @@ import "fmt"
 // 定义一些AOI边界值
 const (
 	AOI_MIN_X  int = 0
-	AOI_MAX_X  int = 410
-	AOI_CNTS_X int = 10
+	AOI_MAX_X  int = 1000
+	AOI_CNTS_X int = 20
 	AOI_MIN_Y  int = 0
-	AOI_MAX_Y  int = 400
+	AOI_MAX_Y  int = 1000
 	AOI_CNTS_Y int = 20
 )
 
@@ -128,12 +128,16 @@ func (m *AOIManager) GetGidByPos(x, y float32) int {
 func (m *AOIManager) GetPidsByPos(x, y float32) (playerIDs []int) {
 	// 得到当前玩家的GID格子id
 	gID := m.GetGidByPos(x, y)
+	// fmt.Println("now gid :", gID)
 
 	grids := m.GetSurroudGridsByGid(gID)
+	// fmt.Println("grids 9:", grids)
 
 	for _, v := range grids {
 		playerIDs = append(playerIDs, v.GetPlayerIDs()...)
-		fmt.Println(" ====>", v.playerIDs, v.GetPlayerIDs())
+		// fmt.Println(" ====>gid :", v.GID)
+		// fmt.Println("player:", v.GetPlayerIDs())
+
 	}
 	return
 }
@@ -159,6 +163,7 @@ func (m *AOIManager) AddToGridByPos(pID int, x, y float32) {
 	gID := m.GetGidByPos(x, y)
 	grid := m.grids[gID]
 	grid.Add(pID)
+	fmt.Println("Add player to grid : ", gID, m.grids[gID].GetPlayerIDs())
 }
 
 // 通过坐标从格子中删除一个player

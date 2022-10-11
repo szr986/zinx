@@ -36,9 +36,9 @@ func NewPlayer(conn ziface.IConnection) *Player {
 	p := &Player{
 		Pid:  id,
 		Conn: conn,
-		X:    float32(160 + rand.Intn(10)),
+		X:    float32(100 + rand.Intn(10)),
 		Y:    0,
-		Z:    float32(140 + rand.Intn(10)),
+		Z:    float32(100 + rand.Intn(10)),
 		V:    0, // 角度为0
 	}
 	return p
@@ -111,4 +111,101 @@ func (p *Player) Talk(content string) {
 		// 分别给对应的客户端发送消息
 		player.SendMsg(200, proto_msg)
 	}
+}
+
+func (p *Player) SyncSurrounding() {
+	pids := WorldMgrObj.AoiMgr.GetPidsByPos(p.X, p.Z)
+	players := make([]*Player, 0, len(pids))
+	for _, pid := range pids {
+		players = append(players, WorldMgrObj.GetPlayerByPid(int32(pid)))
+	}
+
+	proto_msg := &pb.BroadCast{
+		Pid: p.Pid,
+		Tp:  2,
+		Data: &pb.BroadCast_P{
+			P: &pb.Position{
+				X: p.X,
+				Y: p.Y,
+				Z: p.Z,
+				V: p.V,
+			},
+		},
+	}
+
+	for _, player := range players {
+		player.SendMsg(200, proto_msg)
+	}
+
+	// 将周围玩家数据发给自己
+	players_proto_msg := make([]*pb.Player, 0, len(players))
+	for _, player := range players {
+		p := &pb.Player{
+			Pid: player.Pid,
+			P: &pb.Position{
+				X: player.X,
+				Y: player.Y,
+				Z: player.Z,
+				V: player.V,
+			},
+		}
+		players_proto_msg = append(players_proto_msg, p)
+	}
+
+	SyncPlayer_proto_msg := &pb.SyncPlayer{
+		Ps: players_proto_msg[:],
+	}
+
+	p.SendMsg(202, SyncPlayer_proto_msg)
+}
+
+// 广播当前玩家位置移动信息
+
+func (p *Player) UpdatePos(x, y, z, v float32) {
+	p.X = x
+	p.Y = y
+	p.Z = z
+	p.V = v
+	proto_msg := &pb.BroadCast{
+		Pid: p.Pid,
+		Tp:  4,
+		Data: &pb.BroadCast_P{
+			P: &pb.Position{X: p.X,
+				Y: p.Y,
+				Z: p.Z,
+				V: p.V,
+			},
+		},
+	}
+
+	players := p.GetSurroudingPlayers()
+
+	for _, player := range players {
+		player.SendMsg(200, proto_msg)
+	}
+}
+
+func (p *Player) GetSurroudingPlayers() []*Player {
+	pids := WorldMgrObj.AoiMgr.GetPidsByPos(p.X, p.Z)
+
+	players := make([]*Player, 0, len(pids))
+	for _, pid := range pids {
+		players = append(players, WorldMgrObj.GetPlayerByPid(int32(pid)))
+	}
+
+	return players
+}
+
+func (p *Player) Offline() {
+	players := p.GetSurroudingPlayers()
+	proto_msg := &pb.SyncPid{
+		Pid: p.Pid,
+	}
+
+	for _, player := range players {
+		player.SendMsg(201, proto_msg)
+	}
+
+	WorldMgrObj.AoiMgr.RemoveFromGridByPos(int(p.Pid), p.X, p.Z)
+	WorldMgrObj.RemovePlayerByPid(p.Pid)
 }

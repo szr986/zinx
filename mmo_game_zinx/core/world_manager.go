@@ -29,13 +29,13 @@ func (wm *WorldManager) AddPlayer(player *Player) {
 	wm.Players[player.Pid] = player
 	wm.pLock.Unlock()
 	// 将player添加到AOIMANAGER中
-	wm.AoiMgr.AddToGridByPos(int(player.Pid), player.X, player.Y)
+	wm.AoiMgr.AddToGridByPos(int(player.Pid), player.X, player.Z)
 }
 
 // 删除一个玩家
 func (wm *WorldManager) RemovePlayerByPid(pid int32) {
 	player := wm.Players[pid]
-	wm.AoiMgr.RemoveFromGridByPos(int(pid), player.X, player.Y)
+	wm.AoiMgr.RemoveFromGridByPos(int(pid), player.X, player.Z)
 
 	wm.pLock.Lock()
 	delete(wm.Players, pid)
