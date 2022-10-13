@@ -1,6 +1,10 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+
+	"example.com/m/mmo_game_zinx/db"
+)
 
 // 定义一些AOI边界值
 const (
@@ -126,6 +130,7 @@ func (m *AOIManager) GetGidByPos(x, y float32) int {
 
 // 通过横纵坐标得到周边九宫格全部playerIDs
 func (m *AOIManager) GetPidsByPos(x, y float32) (playerIDs []int) {
+	redisPlayer := make([]string, 0)
 	// 得到当前玩家的GID格子id
 	gID := m.GetGidByPos(x, y)
 	// fmt.Println("now gid :", gID)
@@ -133,12 +138,17 @@ func (m *AOIManager) GetPidsByPos(x, y float32) (playerIDs []int) {
 	grids := m.GetSurroudGridsByGid(gID)
 	// fmt.Println("grids 9:", grids)
 
+	// 测试redis
+	rdb := db.GetRedisClient()
+
 	for _, v := range grids {
 		playerIDs = append(playerIDs, v.GetPlayerIDs()...)
 		// fmt.Println(" ====>gid :", v.GID)
 		// fmt.Println("player:", v.GetPlayerIDs())
-
+		PlayerIDstring := rdb.SMembers("grid:" + string(v.GID)).Val()
+		redisPlayer = append(redisPlayer, PlayerIDstring...)
 	}
+	fmt.Println("redis player in 9 :", redisPlayer)
 	return
 }
 

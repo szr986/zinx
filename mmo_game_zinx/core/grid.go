@@ -3,6 +3,8 @@ package core
 import (
 	"fmt"
 	"sync"
+
+	"example.com/m/mmo_game_zinx/db"
 )
 
 // AOI地图中的一个格子类型
@@ -42,6 +44,19 @@ func (g *Grid) Add(playerID int) {
 	defer g.pIDLock.Unlock()
 
 	g.playerIDs[playerID] = true
+
+	rdb := db.GetRedisClient()
+	Istrue, err := rdb.SIsMember("grid:"+string(g.GID), playerID).Result()
+	if err != nil {
+		fmt.Println("get from redis err:", err)
+		return
+	}
+	if Istrue == true {
+		fmt.Println("player already exists in grid : ", g.GID)
+	}
+
+	rdb.SAdd("grid:"+string(g.GID), playerID)
+	fmt.Println("Redis Grid : ", g.GID, "Player : ", rdb.SMembers("grid:"+string(g.GID)).String())
 }
 
 // 从格子删除一个玩家
